@@ -1,4 +1,5 @@
 #include "Game.h"
+#include <cstdlib>
 
 Card::Card(int num) {
   assert(num >= 0 && num < 54 && "Card num out of bound");
@@ -72,6 +73,7 @@ void Deck::init() {
 }
 
 void Deck::shuffle() {
+  srand(time(NULL));
   for (int i = 0; i < 54 - 1; i++) {
     int j = i + (rand() % (54 - i));
     std::swap(cards[i], cards[j]);
@@ -153,4 +155,34 @@ void Game::print_state() {
     std::cout << c << " ";
   }
   std::cout << std::endl;
+}
+
+bool Game::isGameEnd() {
+  return (player_1.size() == 0 || player_2.size() == 0 || player_3.size() == 0);
+}
+
+void Game::run() {
+  while (!isGameEnd()) {
+    round++;
+    std::cout << "Round: " << round << std::endl;
+
+    print_state();
+
+    // do sth
+    std::vector<std::vector<Card>> p1_move = Strategy::get_possible_move(player_1);
+    int index = 0;
+    for (const auto &move : p1_move) {
+      std::cout << index++ << " ---\t";
+      for (const auto &m : move) {
+        std::cout << m << " ";
+      }
+      std::cout << std::endl;
+    }
+
+    int choice;
+    std::cin >> choice;
+    assert(choice >= 0 && choice < index);
+
+    remove_card_set(p1_move[choice], player_1);
+  }
 }
