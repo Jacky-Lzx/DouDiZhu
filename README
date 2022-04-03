@@ -1,0 +1,19 @@
+# DouDiZhu (斗地主)
+
+This is a program simulating the game DouDizhu. Also maybe an AI that can play it.
+
+## Current States
+
+- [ ] Finish the game
+
+  - [ ] Game initialization
+
+  - [ ] Deciding the landlord
+
+  - [ ] Game control
+  
+  - [ ] Use socket to communicate with other programs, to read inputs and give response.
+
+- [ ] Finish the AI
+
+  TBD
