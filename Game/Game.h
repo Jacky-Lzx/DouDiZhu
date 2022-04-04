@@ -55,7 +55,7 @@ enum type_t {
   ThreeTwo, // 三带二
 
   Airplane_Single, // 飞机
-  Airplane_Pair, // 飞机
+  Airplane_Pair,   // 飞机
 
   Four_Two_Single, // 四带二（两张）
   Four_Two_Pair,   // 四带二（两对）
@@ -161,6 +161,11 @@ private:
     std::vector<Card> temp;
     for (size_t index = 0; index < current.size();
          index = jump_to_next_number(current, index)) {
+      if (current[index] == Card(SPADE, 2) ||
+          current[index] == Card(BLACK_JOKER) ||
+          current[index] == Card(RED_JOKER)) {
+            break;
+      }
       temp = std::vector<Card>();
       size_t length_temp = 0;
       size_t index_temp = index;
