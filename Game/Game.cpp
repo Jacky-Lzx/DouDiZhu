@@ -155,17 +155,22 @@ bool Game::isGameEnd() {
 }
 
 void Game::run() {
-  // Type current_status = TYPE_START;
-  CardSet last_play(TYPE_START, {});
+  int current_player = 0;
+  int last_player = -1;
   while (!isGameEnd()) {
-    round++;
-    std::cout << "Round: " << round << std::endl;
+    CardSet last_play(TYPE_START, {});
 
+    round++;
     print_state();
 
     // do sth
-    int current_player = 0;
     while (true) {
+      if (current_player == last_player) {
+        std::cout << "Player " << current_player << " wins this round!"
+                  << std::endl;
+        last_player = -1;
+        break;
+      }
       std::cout << "===== Current player: " << current_player
                 << " =====" << std::endl;
       std::vector<CardSet> move = Strategy::get_possible_move(
@@ -186,17 +191,41 @@ void Game::run() {
         }
         std::cout << std::endl;
       }
-      if (index == 0)
-        break;
-      int choice;
-      std::cin >> choice;
-      assert(choice >= 0 && choice < index);
-      remove_card_set(move[choice], players[current_player]);
-      last_play = move[choice];
-
+      if (index == 0) {
+        std::cout << "Player " << current_player << " doesn't have choice."
+                  << std::endl;
+      } else {
+        int choice;
+        std::cin >> choice;
+        while (choice < -1 || choice >= index) {
+          std::cout << "Invaid index, choose again: " << std::endl;
+          std::cin >> choice;
+        }
+        // The first player cannot give up
+        if (last_play.get_type() == TYPE_START) {
+          while (choice == -1) {
+            std::cout << "The first one can not give up. Repeat: " << std::endl;
+            std::cin >> choice;
+          }
+        }
+        if (choice == -1) {
+          std::cout << "Player " << current_player << " gives no choice."
+                    << std::endl;
+        } else {
+          assert(choice >= 0 && choice < index);
+          remove_card_set(move[choice], players[current_player]);
+          last_play = move[choice];
+          last_player = current_player;
+        }
+      }
       current_player = (current_player + 1) % 3;
     }
-    break;
+  }
+  for (int i = 0; i < 3; i++) {
+    if (players[i].empty()) {
+      std::cout << "Player " << i << " wins the game!" << std::endl;
+      return;
+    }
   }
 }
 bool operator==(const Card &lhs, const Card &rhs) {
