@@ -96,6 +96,10 @@ public:
     }
     }
   }
+
+  std::vector<Card> get_base() const { return base; }
+  std::vector<Card> get_extra() const { return extra; }
+  Type get_type() const { return type; }
 };
 
 class Deck {
@@ -123,11 +127,11 @@ private:
   get_consecutive_n_cards_set(const std::vector<Card> &current, const int &n);
 
   // number 2 and jokers are not included
-  static std::vector<std::vector<Card>>
-  get_sequence(const std::vector<Card> &current, const int &consecutive_num,
-               const int &length);
+  static std::vector<std::vector<Card>> get_sequence(const std::vector<Card> &current,
+                                           const int &consecutive_num,
+                                           const int &length);
 
-  static std::vector<std::pair<Type, std::vector<Card>>>
+  static std::vector<CardSet>
   get_possible_move_by_type(const std::vector<Card> &current, Type type);
 
   // return current.size() if index == current.size()
@@ -140,12 +144,11 @@ private:
   static std::vector<Type> get_possible_types(Type current_type);
 
 public:
-  static std::vector<std::pair<Type, std::vector<Card>>>
-  get_possible_move(std::vector<Card> &current, Type current_type);
+  static std::vector<CardSet> get_possible_move(std::vector<Card> &current,
+                                                Type current_type);
 
-  static std::vector<std::pair<Type, std::vector<Card>>>
-  trim_by_last_play(std::vector<std::pair<Type, std::vector<Card>>> &current,
-                    Type current_type, std::vector<Card> last_play);
+  static std::vector<CardSet> trim_by_last_play(std::vector<CardSet> &current,
+                                                CardSet last_play);
 };
 
 class Game {
@@ -156,11 +159,18 @@ private:
   void print_state();
   bool isGameEnd();
 
-  void remove_card_set(const std::vector<Card> &card_set,
-                       std::vector<Card> &hand) {
-    for (size_t index = 0; index < card_set.size(); index++) {
+  void remove_card_set(const CardSet &card_set, std::vector<Card> &hand) {
+    for (const auto &b : card_set.get_base()) {
       for (auto i = hand.begin(); i != hand.end(); i++) {
-        if (i->equal_all(card_set[index])) {
+        if (i->equal_all(b)) {
+          hand.erase(i);
+          break;
+        }
+      }
+    }
+    for (const auto &e : card_set.get_extra()) {
+      for (auto i = hand.begin(); i != hand.end(); i++) {
+        if (i->equal_all(e)) {
           hand.erase(i);
           break;
         }

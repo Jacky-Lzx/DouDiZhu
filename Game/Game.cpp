@@ -1,4 +1,5 @@
 #include "Game.h"
+#include <chrono>
 #include <cstdlib>
 
 Card::Card(int num) {
@@ -152,8 +153,8 @@ bool Game::isGameEnd() {
 }
 
 void Game::run() {
-  Type current_status = TYPE_START;
-  std::vector<Card> last_play;
+  // Type current_status = TYPE_START;
+  CardSet last_play(TYPE_START, {});
   while (!isGameEnd()) {
     round++;
     std::cout << "Round: " << round << std::endl;
@@ -165,15 +166,21 @@ void Game::run() {
     while (true) {
       std::cout << "===== Current player: " << current_player
                 << " =====" << std::endl;
-      std::vector<std::pair<Type, std::vector<Card>>> move =
-          Strategy::get_possible_move(players[current_player], current_status);
-      move = Strategy::trim_by_last_play(move, current_status, last_play);
+      std::vector<CardSet> move = Strategy::get_possible_move(
+          players[current_player], last_play.get_type());
+      move = Strategy::trim_by_last_play(move, last_play);
       int index = 0;
       for (const auto &move : move) {
         std::cout << index++ << " ---\t";
-        std::cout << move.first << ": ";
-        for (const auto &m : move.second) {
+        std::cout << move.get_type() << ": ";
+        for (const auto &m : move.get_base()) {
           std::cout << m << " ";
+        }
+        if (!move.get_extra().empty()) {
+          std::cout << " +++ ";
+          for (const auto &m : move.get_extra()) {
+            std::cout << m << " ";
+          }
         }
         std::cout << std::endl;
       }
@@ -182,9 +189,8 @@ void Game::run() {
       int choice;
       std::cin >> choice;
       assert(choice >= 0 && choice < index);
-      remove_card_set(move[choice].second, players[current_player]);
-      current_status = move[choice].first;
-      last_play = move[choice].second;
+      remove_card_set(move[choice], players[current_player]);
+      last_play = move[choice];
 
       current_player = (current_player + 1) % 3;
     }
@@ -276,10 +282,10 @@ Strategy::get_sequence(const std::vector<Card> &current,
   return ans;
 }
 
-std::vector<std::pair<Type, std::vector<Card>>>
+std::vector<CardSet>
 Strategy::get_possible_move_by_type(const std::vector<Card> &current,
                                     Type type) {
-  std::vector<std::pair<Type, std::vector<Card>>> ans;
+  std::vector<CardSet> ans;
   size_t length = current.size();
   size_t index = 0;
 
@@ -290,7 +296,7 @@ Strategy::get_possible_move_by_type(const std::vector<Card> &current,
   case Single: {
     auto ret = get_consecutive_n_cards_set(current, 1);
     for (const auto &r : ret) {
-      ans.push_back(std::pair<Type, std::vector<Card>>(type, r));
+      ans.push_back(CardSet(type, r));
     }
     break;
   }
@@ -298,7 +304,7 @@ Strategy::get_possible_move_by_type(const std::vector<Card> &current,
   case Double: {
     auto ret = get_consecutive_n_cards_set(current, 2);
     for (const auto &r : ret) {
-      ans.push_back(std::pair<Type, std::vector<Card>>(type, r));
+      ans.push_back(CardSet(type, r));
     }
     break;
   }
@@ -306,7 +312,7 @@ Strategy::get_possible_move_by_type(const std::vector<Card> &current,
   case Triple: {
     auto ret = get_consecutive_n_cards_set(current, 3);
     for (const auto &r : ret) {
-      ans.push_back(std::pair<Type, std::vector<Card>>(type, r));
+      ans.push_back(CardSet(type, r));
     }
     break;
   }
@@ -314,7 +320,7 @@ Strategy::get_possible_move_by_type(const std::vector<Card> &current,
   case SingleSeq: {
     auto ret = get_sequence(current, 1, type.get_length());
     for (const auto &r : ret) {
-      ans.push_back(std::pair<Type, std::vector<Card>>(type, r));
+      ans.push_back(CardSet(type, r));
     }
     break;
   }
@@ -322,7 +328,7 @@ Strategy::get_possible_move_by_type(const std::vector<Card> &current,
   case DoubleSeq: {
     auto ret = get_sequence(current, 2, type.get_length());
     for (const auto &r : ret) {
-      ans.push_back(std::pair<Type, std::vector<Card>>(type, r));
+      ans.push_back(CardSet(type, r));
     }
     break;
   }
@@ -330,7 +336,7 @@ Strategy::get_possible_move_by_type(const std::vector<Card> &current,
   case ThreeSeq: {
     auto ret = get_sequence(current, 3, type.get_length());
     for (const auto &r : ret) {
-      ans.push_back(std::pair<Type, std::vector<Card>>(type, r));
+      ans.push_back(CardSet(type, r));
     }
     break;
   }
@@ -343,9 +349,8 @@ Strategy::get_possible_move_by_type(const std::vector<Card> &current,
         if (t[0] == o[0])
           continue;
         std::vector<Card> temp;
-        temp.insert(temp.end(), t.begin(), t.end());
         temp.push_back(o[0]);
-        ans.push_back(std::pair<Type, std::vector<Card>>(type, temp));
+        ans.push_back(CardSet(type, t, temp));
       }
     }
   }
@@ -360,7 +365,7 @@ Strategy::get_possible_move_by_type(const std::vector<Card> &current,
         std::vector<Card> temp;
         temp.insert(temp.end(), t.begin(), t.end());
         temp.insert(temp.end(), o.begin(), o.end());
-        ans.push_back(std::pair<Type, std::vector<Card>>(type, temp));
+        ans.push_back(CardSet(type, t, temp));
       }
     }
   }
@@ -377,7 +382,7 @@ Strategy::get_possible_move_by_type(const std::vector<Card> &current,
           temp.insert(temp.end(), f.begin(), f.end());
           temp.insert(temp.end(), two[t1].begin(), two[t1].end());
           temp.insert(temp.end(), two[t2].begin(), two[t2].end());
-          ans.push_back(std::pair<Type, std::vector<Card>>(type, temp));
+          ans.push_back(CardSet(type, f, temp));
         }
       }
     }
@@ -395,7 +400,7 @@ Strategy::get_possible_move_by_type(const std::vector<Card> &current,
           temp.insert(temp.end(), f.begin(), f.end());
           temp.insert(temp.end(), one[o1].begin(), one[o1].end());
           temp.insert(temp.end(), one[o2].begin(), one[o2].end());
-          ans.push_back(std::pair<Type, std::vector<Card>>(type, temp));
+          ans.push_back(CardSet(type, f, temp));
         }
       }
     }
@@ -422,7 +427,7 @@ Strategy::get_possible_move_by_type(const std::vector<Card> &current,
   case Bomb: {
     auto ret = get_consecutive_n_cards_set(current, 4);
     for (const auto &r : ret) {
-      ans.push_back(std::pair<Type, std::vector<Card>>(type, r));
+      ans.push_back(CardSet(type, r));
     }
     break;
   }
@@ -431,7 +436,7 @@ Strategy::get_possible_move_by_type(const std::vector<Card> &current,
     if (current[current.size() - 1] == Card(RED_JOKER, -1) &&
         current[current.size() - 2] == Card(BLACK_JOKER, -1)) {
       set = std::vector<Card>(current.end() - 2, current.end());
-      ans.push_back(std::pair<Type, std::vector<Card>>(type, set));
+      ans.push_back(CardSet(type, set));
     }
     break;
   }
@@ -520,11 +525,11 @@ std::vector<Type> Strategy::get_possible_types(Type current_type) {
   return types;
 }
 
-std::vector<std::pair<Type, std::vector<Card>>>
-Strategy::get_possible_move(std::vector<Card> &current, Type current_type) {
+std::vector<CardSet> Strategy::get_possible_move(std::vector<Card> &current,
+                                                 Type current_type) {
   std::sort(current.begin(), current.end());
 
-  std::vector<std::pair<Type, std::vector<Card>>> ans;
+  std::vector<CardSet> ans;
 
   std::vector<Type> possible_types = get_possible_types(current_type);
 
@@ -535,9 +540,8 @@ Strategy::get_possible_move(std::vector<Card> &current, Type current_type) {
   return ans;
 }
 
-std::vector<std::pair<Type, std::vector<Card>>> Strategy::trim_by_last_play(
-    std::vector<std::pair<Type, std::vector<Card>>> &current, Type current_type,
-    std::vector<Card> last_play) {
+std::vector<CardSet> Strategy::trim_by_last_play(std::vector<CardSet> &current,
+                                                 CardSet last_play) {
   // TODO: finish this function
   return current;
 }
