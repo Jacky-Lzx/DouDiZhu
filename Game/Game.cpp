@@ -16,6 +16,13 @@ Card::Card(int num) {
   suit = (Suit)(num / 13);
   number = num - ((int)suit * 13) + 1;
 }
+Card operator-(const Card &c1, const int &i) {
+  assert(i == 1);
+  if (c1.number == 1) {
+    return Card(c1.suit, 13);
+  }
+  return Card(c1.suit, c1.number - i);
+}
 
 bool operator<(const Card &c1, const Card &c2) {
   if (c1.suit == RED_JOKER || c1.suit == RED_JOKER) {
@@ -191,8 +198,9 @@ void Game::run() {
     int index = 0;
     for (const auto &move : p1_move) {
       std::cout << index++ << " ---\t";
+      std::cout << move.first << ": ";
       for (const auto &m : move.second) {
-        std::cout << move.first << ": " << m << " ";
+        std::cout << m << " ";
       }
       std::cout << std::endl;
     }
