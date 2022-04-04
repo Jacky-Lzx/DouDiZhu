@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <cassert>
 #include <iostream>
+#include <utility>
 #include <vector>
 
 enum Suit { SPADE, HEART, DIAMOND, CLUB, RED_JOKER, BLACK_JOKER };
@@ -57,25 +58,56 @@ public:
   Card pick() { return cards[index++]; }
 };
 
+enum Type {
+  TYPE_START, // no type, can use all kinds of types
+  Single,     // single card
+  Double,     // double cards
+  Triple,     // three cards
+  ThreeOne,   // 三带一
+  ThreeTwo,   // 三带二
+
+  SingleSeq5,  // 顺子
+  SingleSeq6,  // 顺子
+  SingleSeq7,  // 顺子
+  SingleSeq8,  // 顺子
+  SingleSeq9,  // 顺子
+  SingleSeq10, // 顺子
+  SingleSeq11, // 顺子
+  SingleSeq12, // 顺子
+
+  DoubleSeq3,  // 双顺
+  DoubleSeq4,  // 双顺
+  DoubleSeq5,  // 双顺
+  DoubleSeq6,  // 双顺
+  DoubleSeq7,  // 双顺
+  DoubleSeq8,  // 双顺
+  DoubleSeq9,  // 双顺
+  DoubleSeq10, // 双顺
+  DoubleSeq11, // 双顺
+  DoubleSeq12, // 双顺
+
+  ThreeSeq2,  // 三顺
+  ThreeSeq3,  // 三顺
+  ThreeSeq4,  // 三顺
+  ThreeSeq5,  // 三顺
+  ThreeSeq6,  // 三顺
+  ThreeSeq7,  // 三顺
+  ThreeSeq8,  // 三顺
+  ThreeSeq9,  // 三顺
+  ThreeSeq10, // 三顺
+  ThreeSeq11, // 三顺
+  ThreeSeq12, // 三顺
+
+  // Airplane,   // 飞机
+  FourSeq_Two_Single, // 四带二（两张或两对）
+  FourSeq_Two_Pair,   // 四带二（两张或两对）
+
+  Bomb,      // 炸弹
+  UltraBomb, // 王炸
+  TYPE_END,  // no type, can not use any kind of types
+};
 class Strategy {
 private:
-  enum Type {
-    TYPE_START,
-    Single,    // single card
-    Double,    // double cards
-    Triple,    // three cards
-    ThreeOne,  // 三带一
-    TreeTwo,   // 三带二
-    SingleSeq, // 顺子
-    DoubleSeq, // 双顺
-    ThreeSeq,  // 三顺
-    Airplane,  // 飞机
-    FourSeq,   // 四带二（两张或两对）
-    Bomb,      // 炸弹
-    UltraBomb, // 王炸
-    TYPE_END,
-  };
-
   static std::vector<std::vector<Card>>
   get_consecutive_n_cards_set(const std::vector<Card> &current, const int &n) {
     std::vector<std::vector<Card>> ans;
@@ -100,9 +132,9 @@ private:
     return ans;
   }
 
-  static std::vector<std::vector<Card>>
+  static std::vector<std::pair<Type, std::vector<Card>>>
   get_possible_move_by_type(const std::vector<Card> &current, Type type) {
-    std::vector<std::vector<Card>> ans;
+    std::vector<std::pair<Type, std::vector<Card>>> ans;
     size_t length = current.size();
     size_t index = 0;
 
@@ -112,19 +144,25 @@ private:
 
     case Single: {
       auto ret = get_consecutive_n_cards_set(current, 1);
-      ans.insert(ans.end(), ret.begin(), ret.end());
+      for (const auto &r : ret) {
+        ans.push_back(std::pair<Type, std::vector<Card>>(Single, r));
+      }
       break;
     }
 
     case Double: {
       auto ret = get_consecutive_n_cards_set(current, 2);
-      ans.insert(ans.end(), ret.begin(), ret.end());
+      for (const auto &r : ret) {
+        ans.push_back(std::pair<Type, std::vector<Card>>(Double, r));
+      }
       break;
     }
 
     case Triple: {
       auto ret = get_consecutive_n_cards_set(current, 3);
-      ans.insert(ans.end(), ret.begin(), ret.end());
+      for (const auto &r : ret) {
+        ans.push_back(std::pair<Type, std::vector<Card>>(Triple, r));
+      }
       break;
     }
 
@@ -132,7 +170,9 @@ private:
 
     case Bomb: {
       auto ret = get_consecutive_n_cards_set(current, 4);
-      ans.insert(ans.end(), ret.begin(), ret.end());
+      for (const auto &r : ret) {
+        ans.push_back(std::pair<Type, std::vector<Card>>(Bomb, r));
+      }
       break;
     }
 
@@ -140,7 +180,7 @@ private:
       if (current[current.size() - 1] == Card(RED_JOKER, -1) &&
           current[current.size() - 2] == Card(BLACK_JOKER, -1)) {
         set = std::vector<Card>(current.end() - 2, current.end());
-        ans.insert(ans.end(), set);
+        ans.push_back(std::pair<Type, std::vector<Card>>(UltraBomb, set));
       }
       break;
     }
@@ -173,20 +213,96 @@ private:
     return true;
   }
 
+  static std::vector<Type> get_possible_types(Type current_type) {
+    std::vector<Type> types;
+    switch (current_type) {
+    case TYPE_START: {
+      Type ptr = (Type)((int)TYPE_START + 1);
+      while (ptr != TYPE_END) {
+        types.push_back(ptr);
+        ptr = (Type)((int)ptr + 1);
+      }
+      break;
+    }
+    case Single:   // single card
+    case Double:   // double cards
+    case Triple:   // three cards
+    case ThreeOne: // 三带一
+    case ThreeTwo: // 三带二
+
+    case SingleSeq5:  // 顺子
+    case SingleSeq6:  // 顺子
+    case SingleSeq7:  // 顺子
+    case SingleSeq8:  // 顺子
+    case SingleSeq9:  // 顺子
+    case SingleSeq10: // 顺子
+    case SingleSeq11: // 顺子
+    case SingleSeq12: // 顺子
+
+    case DoubleSeq3:  // 双顺
+    case DoubleSeq4:  // 双顺
+    case DoubleSeq5:  // 双顺
+    case DoubleSeq6:  // 双顺
+    case DoubleSeq7:  // 双顺
+    case DoubleSeq8:  // 双顺
+    case DoubleSeq9:  // 双顺
+    case DoubleSeq10: // 双顺
+    case DoubleSeq11: // 双顺
+    case DoubleSeq12: // 双顺
+
+    case ThreeSeq2:  // 三顺
+    case ThreeSeq3:  // 三顺
+    case ThreeSeq4:  // 三顺
+    case ThreeSeq5:  // 三顺
+    case ThreeSeq6:  // 三顺
+    case ThreeSeq7:  // 三顺
+    case ThreeSeq8:  // 三顺
+    case ThreeSeq9:  // 三顺
+    case ThreeSeq10: // 三顺
+    case ThreeSeq11: // 三顺
+    case ThreeSeq12: // 三顺
+
+    case FourSeq_Two_Single: // 四带二（两张或两对）
+    case FourSeq_Two_Pair: { // 四带二（两张或两对）
+      types.push_back(current_type);
+      types.push_back(Bomb);
+      types.push_back(UltraBomb);
+      break;
+    }
+
+    case Bomb: {
+      types.push_back(Bomb);
+      types.push_back(UltraBomb);
+      break;
+    }
+    case UltraBomb: {
+      break;
+    }
+    }
+    return types;
+  }
+
 public:
-  static std::vector<std::vector<Card>>
-  get_possible_move(std::vector<Card> &current) {
+  static std::vector<std::pair<Type, std::vector<Card>>>
+  get_possible_move(std::vector<Card> &current, Type current_type) {
     std::sort(current.begin(), current.end());
 
-    std::vector<std::vector<Card>> ans;
+    std::vector<std::pair<Type, std::vector<Card>>> ans;
 
-    Type type = TYPE_START;
-    while (type != TYPE_END) {
-      type = (Type)((unsigned int)type + 1);
-      auto ret = get_possible_move_by_type(current, type);
+    std::vector<Type> possible_types = get_possible_types(current_type);
+
+    for (const auto &p : possible_types) {
+      auto ret = get_possible_move_by_type(current, p);
       ans.insert(ans.end(), ret.begin(), ret.end());
     }
     return ans;
+  }
+
+  static std::vector<std::pair<Type, std::vector<Card>>>
+  trim_by_last_play(std::vector<std::pair<Type, std::vector<Card>>> &current,
+                    Type current_type, std::vector<Card> last_play) {
+    // TODO: finish this function
+    return current;
   }
 };
 

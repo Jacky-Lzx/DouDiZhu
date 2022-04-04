@@ -162,6 +162,8 @@ bool Game::isGameEnd() {
 }
 
 void Game::run() {
+  Type current_status = TYPE_START;
+  std::vector<Card> last_play;
   while (!isGameEnd()) {
     round++;
     std::cout << "Round: " << round << std::endl;
@@ -169,20 +171,21 @@ void Game::run() {
     print_state();
 
     // do sth
-    std::vector<std::vector<Card>> p1_move = Strategy::get_possible_move(player_1);
+    std::vector<std::pair<Type, std::vector<Card> > > p1_move = Strategy::get_possible_move(player_1, current_status);
+    p1_move = Strategy::trim_by_last_play(p1_move, current_status, last_play);
     int index = 0;
     for (const auto &move : p1_move) {
       std::cout << index++ << " ---\t";
-      for (const auto &m : move) {
-        std::cout << m << " ";
+      for (const auto &m : move.second) {
+        std::cout << move.first << ": " << m << " ";
       }
       std::cout << std::endl;
     }
-
     int choice;
     std::cin >> choice;
     assert(choice >= 0 && choice < index);
-
-    remove_card_set(p1_move[choice], player_1);
+    remove_card_set(p1_move[choice].second, player_1);
+    current_status = p1_move[choice].first;
+    last_play = p1_move[choice].second;
   }
 }
