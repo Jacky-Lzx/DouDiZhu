@@ -18,4 +18,17 @@ set(CMAKE_CXX_FLAGS
     ${MY_FLAGS}
 )
 
-add_executable(main Game/Game.cpp Game/main.cpp)
+set(GAME_FILES
+
+  Game/Card.h
+  Game/Card.cpp
+
+  Game/Game.h
+  Game/Game.cpp
+
+  Game/Strategy.h
+  Game/Strategy.cpp
+)
+
+
+add_executable(main Game/main.cpp ${GAME_FILES})
