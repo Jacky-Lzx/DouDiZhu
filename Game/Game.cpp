@@ -19,8 +19,10 @@ Card::Card(int num) {
   suit = (Suit)(num / 13);
   number = num - ((int)suit * 13) + 1;
 }
+
 Card operator-(const Card &c1, const int &i) {
   assert(i == 1);
+  assert(c1.number != 3);
   if (c1.number == 1) {
     return Card(c1.suit, 13);
   }
@@ -82,9 +84,11 @@ inline std::ostream &operator<<(std::ostream &os, const Type &t) {
   case DoubleSeq:
   case ThreeSeq: {
     os << t.type << "+" << t.length;
+    break;
   }
   default: {
     os << t.type;
+    break;
   }
   }
   return os;
@@ -96,6 +100,9 @@ void Deck::init() {
   }
 }
 
+/**
+ * @brief Fisher-Yates shuffles
+ */
 void Deck::shuffle() {
   srand(time(NULL));
   for (int i = 0; i < 54 - 1; i++) {
@@ -114,11 +121,14 @@ void Game::init() {
   print_state();
 
   // 抢地主
+  // TODO
 
   // 决定地主
+  // TODO
+  // Currently set landlord to player 0
   int landlord = 0;
 
-  // 亮牌
+  // 亮地主牌
   std::vector<Card> landlord_cards;
   std::cout << "Cards of landlord: ";
   for (int i = 0; i < 3; i++) {
@@ -126,6 +136,7 @@ void Game::init() {
     std::cout << landlord_cards.back() << " ";
   }
   std::cout << std::endl;
+
   players[landlord].insert(players[landlord].end(), landlord_cards.begin(),
                            landlord_cards.end());
 
@@ -162,6 +173,10 @@ void Game::run() {
 
     round++;
     print_state();
+
+    // Test: stop at beginning
+    // int cin_temp;
+    // std::cin >> cin_temp;
 
     // do sth
     while (true) {
@@ -317,13 +332,10 @@ std::vector<CardSet>
 Strategy::get_possible_move_by_type(const std::vector<Card> &current,
                                     Type type) {
   std::vector<CardSet> ans;
-  size_t length = current.size();
-  size_t index = 0;
 
   // Temp vector for current available card set that can play
   std::vector<Card> set;
-  switch (type.get_type()) {
-
+  switch (type.get_type_t()) {
   case Single: {
     auto ret = get_consecutive_n_cards_set(current, 1);
     for (const auto &r : ret) {
@@ -502,7 +514,7 @@ bool Strategy::has_consecutive_cards(const std::vector<Card> &current,
 
 std::vector<Type> Strategy::get_possible_types(Type current_type) {
   std::vector<Type> types;
-  switch (current_type.get_type()) {
+  switch (current_type.get_type_t()) {
   case TYPE_START: {
     type_t ptr = (type_t)((int)TYPE_START + 1);
     while (ptr != TYPE_END) {
@@ -525,20 +537,22 @@ std::vector<Type> Strategy::get_possible_types(Type current_type) {
     }
     break;
   }
-  case Single:   // single card
-  case Double:   // double cards
-  case Triple:   // three cards
-  case ThreeOne: // 三带一
-  case ThreeTwo: // 三带二
+  case Single:
+  case Double:
+  case Triple:
 
-  case SingleSeq: // 顺子
+  case ThreeOne:
+  case ThreeTwo:
 
-  case DoubleSeq: // 双顺
+  case SingleSeq:
+  case DoubleSeq:
+  case ThreeSeq:
 
-  case ThreeSeq: // 三顺
+  case Airplane_Pair:
+  case Airplane_Single:
 
-  case Four_Two_Single: // 四带二（两张或两对）
-  case Four_Two_Pair: { // 四带二（两张或两对）
+  case Four_Two_Single:
+  case Four_Two_Pair: {
     types.push_back(current_type);
     types.push_back(Type(Bomb));
     types.push_back(Type(UltraBomb));
@@ -552,6 +566,9 @@ std::vector<Type> Strategy::get_possible_types(Type current_type) {
   }
   case UltraBomb: {
     break;
+  }
+  case TYPE_END: {
+    assert(0);
   }
   }
   return types;
@@ -574,7 +591,6 @@ std::vector<CardSet> Strategy::get_possible_move(std::vector<Card> &current,
 
 std::vector<CardSet> Strategy::trim_by_last_play(std::vector<CardSet> &current,
                                                  CardSet last_play) {
-  // TODO: finish this function
   std::vector<CardSet> ans;
   for (const auto &c : current) {
     if (last_play < c) {
@@ -592,31 +608,31 @@ bool operator<=(const Type &t1, const Type &t2) { return t1 < t2 || t1 == t2; }
 
 bool operator<(const Type &t1, const Type &t2) {
   switch (t1.type) {
-  case TYPE_START: // no type, can use all kinds of types
+  case TYPE_START:
     return true;
-  case Single: // single card
-  case Double: // double cards
-  case Triple: // three cards
+  case Single:
+  case Double:
+  case Triple:
 
-  case SingleSeq: // 顺子
-  case DoubleSeq: // 双顺
-  case ThreeSeq:  // 三顺
+  case SingleSeq:
+  case DoubleSeq:
+  case ThreeSeq:
 
-  case ThreeOne: // 三带一
-  case ThreeTwo: // 三带二
+  case ThreeOne:
+  case ThreeTwo:
 
-  case Airplane_Single: // 飞机
-  case Airplane_Pair:   // 飞机
+  case Airplane_Single:
+  case Airplane_Pair:
 
-  case Four_Two_Single: // 四带二（两张）
-  case Four_Two_Pair:   // 四带二（两对）
+  case Four_Two_Single:
+  case Four_Two_Pair:
     return t2.type == Bomb || t2.type == UltraBomb;
 
-  case Bomb: // 炸弹
+  case Bomb:
     return t2.type == UltraBomb;
 
-  case UltraBomb:  // 王炸
-  case TYPE_END: { // no type, can not use any kind of types
+  case UltraBomb:
+  case TYPE_END: {
     return false;
     break;
   }
@@ -628,41 +644,60 @@ bool operator<(const CardSet &c1, const CardSet &c2) {
     return true;
   }
   if (c1.type == c2.type) {
-    switch (c1.get_type().get_type()) {
-    case TYPE_START: // no type, can use all kinds of types
-                     // should not go here
+    switch (c1.get_type().get_type_t()) {
+    case TYPE_START:
+      // should not go here
       assert(0);
-    case Single: // single card
-    case Double: // double cards
-    case Triple: // three cards
+    case Single:
+    case Double:
+    case Triple:
       return c1.base[0] < c2.base[0];
 
-    case SingleSeq: // 顺子
-    case DoubleSeq: // 双顺
-    case ThreeSeq:  // 三顺
+    case SingleSeq:
+    case DoubleSeq:
+    case ThreeSeq:
       return c1.base[0] < c2.base[0];
 
-    case ThreeOne: // 三带一
-    case ThreeTwo: // 三带二
+    case ThreeOne:
+    case ThreeTwo:
       return c1.base[0] < c2.base[0];
 
-    case Airplane_Single: // 飞机
-    case Airplane_Pair:   // 飞机
+    case Airplane_Single:
+    case Airplane_Pair:
       return c1.base[0] < c2.base[0];
 
-    case Four_Two_Single: // 四带二（两张）
-    case Four_Two_Pair:   // 四带二（两对）
+    case Four_Two_Single:
+    case Four_Two_Pair:
       return c1.base[0] < c2.base[0];
 
-    case Bomb: // 炸弹
+    case Bomb:
       return c1.base[0] < c2.base[0];
 
-    case UltraBomb: // 王炸
-      assert(0);
-    case TYPE_END: // no type, can not use any kind of types
+    case UltraBomb:
+    case TYPE_END:
       assert(0);
     }
     assert(0);
   }
   return false;
+}
+
+void Game::remove_card_set(const CardSet &card_set, std::vector<Card> &hand) {
+  // TODO: Improve it later for performance
+  for (const auto &b : card_set.get_base()) {
+    for (auto i = hand.begin(); i != hand.end(); i++) {
+      if (i->equal_all(b)) {
+        hand.erase(i);
+        break;
+      }
+    }
+  }
+  for (const auto &e : card_set.get_extra()) {
+    for (auto i = hand.begin(); i != hand.end(); i++) {
+      if (i->equal_all(e)) {
+        hand.erase(i);
+        break;
+      }
+    }
+  }
 }

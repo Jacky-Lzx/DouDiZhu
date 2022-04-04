@@ -7,9 +7,15 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_BUILD_TYPE Debug)
 
+set(MY_FLAGS "")
+string(JOIN " " MY_FLAGS
+  "-Wall"
+  "-fdiagnostics-color=always"
+  "-O2"
+)
 set(CMAKE_CXX_FLAGS
     # "-Wall -Wextra -Werror -pedantic -Wno-unused-result -Wconversion -Wno-unused-parameter -O2"
-    # "-Wall -O2"
+    ${MY_FLAGS}
 )
 
 add_executable(main Game/Game.cpp Game/main.cpp)
