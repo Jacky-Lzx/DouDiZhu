@@ -70,6 +70,9 @@ public:
   int get_length() { return length; }
 
   friend std::ostream &operator<<(std::ostream &os, const Type &t);
+  friend bool operator==(const Type &t1, const Type &t2);
+  friend bool operator<=(const Type &t1, const Type &t2);
+  friend bool operator<(const Type &t1, const Type &t2);
 };
 
 class CardSet {
@@ -100,6 +103,8 @@ public:
   std::vector<Card> get_base() const { return base; }
   std::vector<Card> get_extra() const { return extra; }
   Type get_type() const { return type; }
+
+  friend bool operator<(const CardSet &c1, const CardSet &c2);
 };
 
 class Deck {

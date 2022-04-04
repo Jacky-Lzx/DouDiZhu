@@ -1,6 +1,8 @@
 #include "Game.h"
+#include <cassert>
 #include <chrono>
 #include <cstdlib>
+#include <type_traits>
 
 Card::Card(int num) {
   assert(num >= 0 && num < 54 && "Card num out of bound");
@@ -544,5 +546,94 @@ std::vector<CardSet> Strategy::get_possible_move(std::vector<Card> &current,
 std::vector<CardSet> Strategy::trim_by_last_play(std::vector<CardSet> &current,
                                                  CardSet last_play) {
   // TODO: finish this function
-  return current;
+  std::vector<CardSet> ans;
+  for (const auto &c : current) {
+    if (last_play < c) {
+      ans.push_back(c);
+    }
+  }
+  return ans;
+}
+
+bool operator==(const Type &t1, const Type &t2) {
+  return (t1.type == t2.type) && (t1.length == t2.length);
+}
+
+bool operator<=(const Type &t1, const Type &t2) { return t1 < t2 || t1 == t2; }
+
+bool operator<(const Type &t1, const Type &t2) {
+  switch (t1.type) {
+  case TYPE_START: // no type, can use all kinds of types
+    return true;
+  case Single: // single card
+  case Double: // double cards
+  case Triple: // three cards
+
+  case SingleSeq: // 顺子
+  case DoubleSeq: // 双顺
+  case ThreeSeq:  // 三顺
+
+  case ThreeOne: // 三带一
+  case ThreeTwo: // 三带二
+
+  case Airplane_Single: // 飞机
+  case Airplane_Pair:   // 飞机
+
+  case Four_Two_Single: // 四带二（两张）
+  case Four_Two_Pair:   // 四带二（两对）
+    return t2.type == Bomb || t2.type == UltraBomb;
+
+  case Bomb: // 炸弹
+    return t2.type == UltraBomb;
+
+  case UltraBomb:  // 王炸
+  case TYPE_END: { // no type, can not use any kind of types
+    return false;
+    break;
+  }
+  }
+}
+
+bool operator<(const CardSet &c1, const CardSet &c2) {
+  if (c1.type < c2.type) {
+    return true;
+  }
+  if (c1.type == c2.type) {
+    switch (c1.get_type().get_type()) {
+    case TYPE_START: // no type, can use all kinds of types
+                     // should not go here
+      assert(0);
+    case Single: // single card
+    case Double: // double cards
+    case Triple: // three cards
+      return c1.base[0] < c2.base[0];
+
+    case SingleSeq: // 顺子
+    case DoubleSeq: // 双顺
+    case ThreeSeq:  // 三顺
+      return c1.base[0] < c2.base[0];
+
+    case ThreeOne: // 三带一
+    case ThreeTwo: // 三带二
+      return c1.base[0] < c2.base[0];
+
+    case Airplane_Single: // 飞机
+    case Airplane_Pair:   // 飞机
+      return c1.base[0] < c2.base[0];
+
+    case Four_Two_Single: // 四带二（两张）
+    case Four_Two_Pair:   // 四带二（两对）
+      return c1.base[0] < c2.base[0];
+
+    case Bomb: // 炸弹
+      return c1.base[0] < c2.base[0];
+
+    case UltraBomb: // 王炸
+      assert(0);
+    case TYPE_END: // no type, can not use any kind of types
+      assert(0);
+    }
+    assert(0);
+  }
+  return false;
 }
