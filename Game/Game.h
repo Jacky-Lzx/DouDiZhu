@@ -474,9 +474,7 @@ class Game {
 private:
   Deck deck;
   int round;
-  std::vector<Card> player_1;
-  std::vector<Card> player_2;
-  std::vector<Card> player_3;
+  std::vector<std::vector<Card>> players;
   void print_state();
   bool isGameEnd();
 
@@ -493,7 +491,7 @@ private:
   }
 
 public:
-  Game() : deck(), round(0), player_1(), player_2(), player_3() {}
+  Game() : deck(), round(0), players(3, std::vector<Card>()) {}
   void init();
   void run();
 };

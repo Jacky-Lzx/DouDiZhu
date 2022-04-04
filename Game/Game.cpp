@@ -103,21 +103,17 @@ void Deck::shuffle() {
 
 void Game::init() {
   // Offering cards
-  for (int j = 0; j < 17; j++) {
-    player_1.push_back(deck.pick());
-  }
-  for (int j = 0; j < 17; j++) {
-    player_2.push_back(deck.pick());
-  }
-  for (int j = 0; j < 17; j++) {
-    player_3.push_back(deck.pick());
+  for (int i = 0; i < 3; i++) {
+    for (int j = 0; j < 17; j++) {
+      players[i].push_back(deck.pick());
+    }
   }
   print_state();
 
   // 抢地主
 
   // 决定地主
-  int landlord = 1;
+  int landlord = 0;
 
   // 亮牌
   std::vector<Card> landlord_cards;
@@ -127,28 +123,12 @@ void Game::init() {
     std::cout << landlord_cards.back() << " ";
   }
   std::cout << std::endl;
-  switch (landlord) {
-  case 1:
-    player_1.insert(player_1.end(), landlord_cards.begin(),
-                    landlord_cards.end());
-    break;
-  case 2:
-    player_2.insert(player_2.end(), landlord_cards.begin(),
-                    landlord_cards.end());
-    break;
-  case 3:
-    player_3.insert(player_3.end(), landlord_cards.begin(),
-                    landlord_cards.end());
-    break;
-  default:
-    assert(0);
+  players[landlord].insert(players[landlord].end(), landlord_cards.begin(),
+                           landlord_cards.end());
+
+  for (auto &p : players) {
+    std::sort(p.begin(), p.end());
   }
-
-  print_state();
-
-  std::sort(player_1.begin(), player_1.end());
-  std::sort(player_2.begin(), player_2.end());
-  std::sort(player_3.begin(), player_3.end());
   std::cout << "After sort: " << std::endl;
   print_state();
 }
@@ -156,30 +136,19 @@ void Game::init() {
 void Game::print_state() {
   std::cout << "Round: " << round << std::endl;
 
-  std::cout << "Cards of Player 1: " << std::endl;
-  std::cout << "\t";
-  for (const auto &c : player_1) {
-    std::cout << c << " ";
+  for (size_t i = 0; i < 3; i++) {
+    std::cout << "Cards of Player " << i + 1 << ": " << std::endl;
+    std::cout << "\t";
+    for (const auto &c : players[i]) {
+      std::cout << c << " ";
+    }
+    std::cout << std::endl;
   }
-  std::cout << std::endl;
-
-  std::cout << "Cards of Player 2: " << std::endl;
-  std::cout << "\t";
-  for (const auto &c : player_2) {
-    std::cout << c << " ";
-  }
-  std::cout << std::endl;
-
-  std::cout << "Cards of Player 3: " << std::endl;
-  std::cout << "\t";
-  for (const auto &c : player_3) {
-    std::cout << c << " ";
-  }
-  std::cout << std::endl;
 }
 
 bool Game::isGameEnd() {
-  return (player_1.size() == 0 || player_2.size() == 0 || player_3.size() == 0);
+  return (players[0].size() == 0 || players[1].size() == 0 ||
+          players[2].size() == 0);
 }
 
 void Game::run() {
@@ -192,23 +161,31 @@ void Game::run() {
     print_state();
 
     // do sth
-    std::vector<std::pair<Type, std::vector<Card>>> p1_move =
-        Strategy::get_possible_move(player_1, current_status);
-    p1_move = Strategy::trim_by_last_play(p1_move, current_status, last_play);
-    int index = 0;
-    for (const auto &move : p1_move) {
-      std::cout << index++ << " ---\t";
-      std::cout << move.first << ": ";
-      for (const auto &m : move.second) {
-        std::cout << m << " ";
+    int current_player = 0;
+    while (true) {
+      std::cout << "===== Current player: " << current_player << " =====" << std::endl;
+      std::vector<std::pair<Type, std::vector<Card>>> move =
+          Strategy::get_possible_move(players[current_player], current_status);
+      move = Strategy::trim_by_last_play(move, current_status, last_play);
+      int index = 0;
+      for (const auto &move : move) {
+        std::cout << index++ << " ---\t";
+        std::cout << move.first << ": ";
+        for (const auto &m : move.second) {
+          std::cout << m << " ";
+        }
+        std::cout << std::endl;
       }
-      std::cout << std::endl;
+      if (index == 0) break;
+      int choice;
+      std::cin >> choice;
+      assert(choice >= 0 && choice < index);
+      remove_card_set(move[choice].second, players[current_player]);
+      current_status = move[choice].first;
+      last_play = move[choice].second;
+
+      current_player = (current_player + 1) % 3;
     }
-    int choice;
-    std::cin >> choice;
-    assert(choice >= 0 && choice < index);
-    remove_card_set(p1_move[choice].second, player_1);
-    current_status = p1_move[choice].first;
-    last_play = p1_move[choice].second;
+    break;
   }
 }
