@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <cassert>
 #include <iostream>
+#include <memory>
 #include <utility>
 #include <vector>
 
@@ -39,6 +40,72 @@ public:
   }
 };
 
+enum type_t {
+  TYPE_START, // no type, can use all kinds of types
+  Single,     // single card
+  Double,     // double cards
+  Triple,     // three cards
+
+  SingleSeq, // 顺子
+  DoubleSeq, // 双顺
+  ThreeSeq,  // 三顺
+
+  // Airplane,   // 飞机
+  ThreeOne,           // 三带一
+  ThreeTwo,           // 三带二
+  FourSeq_Two_Single, // 四带二（两张）
+  FourSeq_Two_Pair,   // 四带二（两对）
+
+  Bomb,      // 炸弹
+  UltraBomb, // 王炸
+  TYPE_END,  // no type, can not use any kind of types
+};
+
+class Type {
+private:
+  type_t type;
+  int length;
+
+public:
+  Type() = delete;
+  Type(type_t _type) : type(_type), length(0) {
+    assert(_type != SingleSeq && _type != DoubleSeq && _type != ThreeSeq);
+  }
+  Type(type_t _type, int _length) : type(_type), length(_length) {
+    assert(_type == SingleSeq || _type == DoubleSeq || _type == ThreeSeq);
+  }
+  type_t get_type() { return type; }
+  int get_length() { return length; }
+
+  friend std::ostream &operator<<(std::ostream &os, const Type &t);
+};
+
+class CardSet {
+private:
+  Type type;
+  std::vector<Card> base;
+  std::vector<Card> extra;
+
+public:
+  CardSet() = delete;
+  CardSet(Type _type, std::vector<Card> _base) : type(_type), base(_base) {}
+  CardSet(Type _type, std::vector<Card> _base, std::vector<Card> _extra)
+      : CardSet(_type, _base) {
+    switch (_type.get_type()) {
+    case ThreeOne:           // 三带一
+    case ThreeTwo:           // 三带二
+    case FourSeq_Two_Single: // 四带二（两张或两对）
+    case FourSeq_Two_Pair: { // 四带二（两张或两对）
+      extra = _extra;
+      break;
+    }
+    default: {
+      assert(0 && "Should not reach here.");
+    }
+    }
+  }
+};
+
 class Deck {
 private:
   Card cards[54];
@@ -58,54 +125,6 @@ public:
   Card pick() { return cards[index++]; }
 };
 
-enum Type {
-  TYPE_START, // no type, can use all kinds of types
-  Single,     // single card
-  Double,     // double cards
-  Triple,     // three cards
-  ThreeOne,   // 三带一
-  ThreeTwo,   // 三带二
-
-  SingleSeq5,  // 顺子
-  SingleSeq6,  // 顺子
-  SingleSeq7,  // 顺子
-  SingleSeq8,  // 顺子
-  SingleSeq9,  // 顺子
-  SingleSeq10, // 顺子
-  SingleSeq11, // 顺子
-  SingleSeq12, // 顺子
-
-  DoubleSeq3,  // 双顺
-  DoubleSeq4,  // 双顺
-  DoubleSeq5,  // 双顺
-  DoubleSeq6,  // 双顺
-  DoubleSeq7,  // 双顺
-  DoubleSeq8,  // 双顺
-  DoubleSeq9,  // 双顺
-  DoubleSeq10, // 双顺
-  DoubleSeq11, // 双顺
-  DoubleSeq12, // 双顺
-
-  ThreeSeq2,  // 三顺
-  ThreeSeq3,  // 三顺
-  ThreeSeq4,  // 三顺
-  ThreeSeq5,  // 三顺
-  ThreeSeq6,  // 三顺
-  ThreeSeq7,  // 三顺
-  ThreeSeq8,  // 三顺
-  ThreeSeq9,  // 三顺
-  ThreeSeq10, // 三顺
-  ThreeSeq11, // 三顺
-  ThreeSeq12, // 三顺
-
-  // Airplane,   // 飞机
-  FourSeq_Two_Single, // 四带二（两张或两对）
-  FourSeq_Two_Pair,   // 四带二（两张或两对）
-
-  Bomb,      // 炸弹
-  UltraBomb, // 王炸
-  TYPE_END,  // no type, can not use any kind of types
-};
 class Strategy {
 private:
   static std::vector<std::vector<Card>>
@@ -126,8 +145,6 @@ private:
       }
 
       index = jump_to_next_number(current, index);
-      // if (index == length - 1)
-      //   break;
     }
     return ans;
   }
@@ -140,7 +157,7 @@ private:
 
     // Temp vector for current available card set that can play
     std::vector<Card> set;
-    switch (type) {
+    switch (type.get_type()) {
 
     case Single: {
       auto ret = get_consecutive_n_cards_set(current, 1);
@@ -215,12 +232,26 @@ private:
 
   static std::vector<Type> get_possible_types(Type current_type) {
     std::vector<Type> types;
-    switch (current_type) {
+    switch (current_type.get_type()) {
     case TYPE_START: {
-      Type ptr = (Type)((int)TYPE_START + 1);
+      type_t ptr = (type_t)((int)TYPE_START + 1);
       while (ptr != TYPE_END) {
-        types.push_back(ptr);
-        ptr = (Type)((int)ptr + 1);
+        if (ptr == SingleSeq) {
+          for (int i = 5; i <= 12; i++) {
+            types.push_back(Type(ptr, i));
+          }
+        } else if (ptr == DoubleSeq) {
+          for (int i = 3; i <= 12; i++) {
+            types.push_back(Type(ptr, i));
+          }
+        } else if (ptr == ThreeSeq) {
+          for (int i = 2; i <= 12; i++) {
+            types.push_back(Type(ptr, i));
+          }
+        } else {
+          types.push_back(Type(ptr));
+        }
+        ptr = (type_t)((int)ptr + 1);
       }
       break;
     }
@@ -230,49 +261,23 @@ private:
     case ThreeOne: // 三带一
     case ThreeTwo: // 三带二
 
-    case SingleSeq5:  // 顺子
-    case SingleSeq6:  // 顺子
-    case SingleSeq7:  // 顺子
-    case SingleSeq8:  // 顺子
-    case SingleSeq9:  // 顺子
-    case SingleSeq10: // 顺子
-    case SingleSeq11: // 顺子
-    case SingleSeq12: // 顺子
+    case SingleSeq: // 顺子
 
-    case DoubleSeq3:  // 双顺
-    case DoubleSeq4:  // 双顺
-    case DoubleSeq5:  // 双顺
-    case DoubleSeq6:  // 双顺
-    case DoubleSeq7:  // 双顺
-    case DoubleSeq8:  // 双顺
-    case DoubleSeq9:  // 双顺
-    case DoubleSeq10: // 双顺
-    case DoubleSeq11: // 双顺
-    case DoubleSeq12: // 双顺
+    case DoubleSeq: // 双顺
 
-    case ThreeSeq2:  // 三顺
-    case ThreeSeq3:  // 三顺
-    case ThreeSeq4:  // 三顺
-    case ThreeSeq5:  // 三顺
-    case ThreeSeq6:  // 三顺
-    case ThreeSeq7:  // 三顺
-    case ThreeSeq8:  // 三顺
-    case ThreeSeq9:  // 三顺
-    case ThreeSeq10: // 三顺
-    case ThreeSeq11: // 三顺
-    case ThreeSeq12: // 三顺
+    case ThreeSeq: // 三顺
 
     case FourSeq_Two_Single: // 四带二（两张或两对）
     case FourSeq_Two_Pair: { // 四带二（两张或两对）
       types.push_back(current_type);
-      types.push_back(Bomb);
-      types.push_back(UltraBomb);
+      types.push_back(Type(Bomb));
+      types.push_back(Type(UltraBomb));
       break;
     }
 
     case Bomb: {
-      types.push_back(Bomb);
-      types.push_back(UltraBomb);
+      types.push_back(Type(Bomb));
+      types.push_back(Type(UltraBomb));
       break;
     }
     case UltraBomb: {

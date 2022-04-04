@@ -66,6 +66,20 @@ inline std::ostream &operator<<(std::ostream &os, const Card &c) {
   return os;
 }
 
+inline std::ostream &operator<<(std::ostream &os, const Type &t) {
+  switch (t.type) {
+  case SingleSeq:
+  case DoubleSeq:
+  case ThreeSeq: {
+    os << t.type << "+" << t.length;
+  }
+  default: {
+    os << t.type;
+  }
+  }
+  return os;
+}
+
 void Deck::init() {
   for (int i = 0; i < 54; i++) {
     cards[i] = Card(i);
@@ -171,7 +185,8 @@ void Game::run() {
     print_state();
 
     // do sth
-    std::vector<std::pair<Type, std::vector<Card> > > p1_move = Strategy::get_possible_move(player_1, current_status);
+    std::vector<std::pair<Type, std::vector<Card>>> p1_move =
+        Strategy::get_possible_move(player_1, current_status);
     p1_move = Strategy::trim_by_last_play(p1_move, current_status, last_play);
     int index = 0;
     for (const auto &move : p1_move) {

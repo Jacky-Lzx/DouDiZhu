@@ -5,10 +5,11 @@ project(DouDiZhu)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
+set(CMAKE_BUILD_TYPE Debug)
 
 set(CMAKE_CXX_FLAGS
     # "-Wall -Wextra -Werror -pedantic -Wno-unused-result -Wconversion -Wno-unused-parameter -O2"
-    "-Wall -O2"
+    # "-Wall -O2"
 )
 
 add_executable(main Game/Game.cpp Game/main.cpp)
