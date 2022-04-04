@@ -138,7 +138,7 @@ void Game::print_state() {
   std::cout << "Round: " << round << std::endl;
 
   for (size_t i = 0; i < 3; i++) {
-    std::cout << "Cards of Player " << i + 1 << ": " << std::endl;
+    std::cout << "Cards of Player " << i << ": " << std::endl;
     std::cout << "\t";
     for (const auto &c : players[i]) {
       std::cout << c << " ";
@@ -353,6 +353,7 @@ Strategy::get_possible_move_by_type(const std::vector<Card> &current,
         ans.push_back(CardSet(type, t, temp));
       }
     }
+    break;
   }
 
   case ThreeTwo: {
@@ -363,11 +364,11 @@ Strategy::get_possible_move_by_type(const std::vector<Card> &current,
         if (t[0] == o[0])
           continue;
         std::vector<Card> temp;
-        temp.insert(temp.end(), t.begin(), t.end());
         temp.insert(temp.end(), o.begin(), o.end());
         ans.push_back(CardSet(type, t, temp));
       }
     }
+    break;
   }
 
   case Four_Two_Pair: {
@@ -379,13 +380,13 @@ Strategy::get_possible_move_by_type(const std::vector<Card> &current,
           if (f[0] == two[t1][0] || f[0] == two[t2][0])
             continue;
           std::vector<Card> temp;
-          temp.insert(temp.end(), f.begin(), f.end());
           temp.insert(temp.end(), two[t1].begin(), two[t1].end());
           temp.insert(temp.end(), two[t2].begin(), two[t2].end());
           ans.push_back(CardSet(type, f, temp));
         }
       }
     }
+    break;
   }
 
   case Four_Two_Single: {
@@ -397,13 +398,13 @@ Strategy::get_possible_move_by_type(const std::vector<Card> &current,
           if (f[0] == one[o1][0] || f[0] == one[o2][0])
             continue;
           std::vector<Card> temp;
-          temp.insert(temp.end(), f.begin(), f.end());
           temp.insert(temp.end(), one[o1].begin(), one[o1].end());
           temp.insert(temp.end(), one[o2].begin(), one[o2].end());
           ans.push_back(CardSet(type, f, temp));
         }
       }
     }
+    break;
   }
 
   case Airplane_Single: {

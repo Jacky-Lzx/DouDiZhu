@@ -127,9 +127,9 @@ private:
   get_consecutive_n_cards_set(const std::vector<Card> &current, const int &n);
 
   // number 2 and jokers are not included
-  static std::vector<std::vector<Card>> get_sequence(const std::vector<Card> &current,
-                                           const int &consecutive_num,
-                                           const int &length);
+  static std::vector<std::vector<Card>>
+  get_sequence(const std::vector<Card> &current, const int &consecutive_num,
+               const int &length);
 
   static std::vector<CardSet>
   get_possible_move_by_type(const std::vector<Card> &current, Type type);
