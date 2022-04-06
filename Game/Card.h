@@ -93,8 +93,10 @@ public:
   CardSet(Type _type, std::vector<Card> _base, std::vector<Card> _extra)
       : CardSet(_type, _base) {
     switch (_type.get_type_t()) {
-    case ThreeOne:        // 三带一
-    case ThreeTwo:        // 三带二
+    case ThreeOne: // 三带一
+    case ThreeTwo: // 三带二
+    case Airplane_Single:
+    case Airplane_Pair:
     case Four_Two_Single: // 四带二（两张或两对）
     case Four_Two_Pair: { // 四带二（两张或两对）
       extra = _extra;

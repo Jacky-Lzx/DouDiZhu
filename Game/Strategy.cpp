@@ -195,20 +195,53 @@ Strategy::get_possible_move_by_type(const std::vector<Card> &current,
   }
 
   case Airplane_Single: {
-    // TODO
-    // auto three_two = get_sequence(current, 3, 2);
-    // auto one = get_consecutive_n_cards_set(current, 1);
-    // for (const auto &t : three_two) {
-    //   for (size_t o1 = 0; o1 < one.size(); o1++) {
-    //     for (size_t o2 = o1 + 1; o2 < one.size(); o2++) {
-    //     }
-    //   }
-    // }
+    auto three_two = get_sequence(current, 3, 2);
+    auto one = get_consecutive_n_cards_set(current, 1);
+    for (const auto &t : three_two) {
+      for (size_t o1 = 0; o1 < one.size(); o1++) {
+        for (size_t o2 = o1 + 1; o2 < one.size(); o2++) {
+          if (t[0] == one[o1][0] || t[0] == one[o2][0] || t[3] == one[o1][0] ||
+              t[3] == one[o2][0]) {
+            continue;
+          }
+          std::vector<Card> temp;
+          temp.insert(temp.end(), one[o1].begin(), one[o1].end());
+          temp.insert(temp.end(), one[o2].begin(), one[o2].end());
+          ans.push_back(CardSet(type, t, temp));
+        }
+      }
+    }
+    auto two = get_consecutive_n_cards_set(current, 2);
+    for (const auto &t : three_two) {
+      for (size_t o1 = 0; o1 < two.size(); o1++) {
+        if (t[0] == two[o1][0] || t[3] == two[o1][0]) {
+          continue;
+        }
+        std::vector<Card> temp;
+        temp.insert(temp.end(), one[o1].begin(), one[o1].end());
+        ans.push_back(CardSet(type, t, temp));
+      }
+    }
     break;
   }
 
   case Airplane_Pair: {
-    // TODO
+    auto three_two = get_sequence(current, 3, 2);
+    auto two = get_consecutive_n_cards_set(current, 2);
+    for (const auto &t : three_two) {
+      for (size_t o1 = 0; o1 < two.size(); o1++) {
+        for (size_t o2 = o1 + 1; o2 < two.size(); o2++) {
+          if (t[0] == two[o1][0] || t[0] == two[o2][0] || t[3] == two[o1][0] ||
+              t[3] == two[o2][0]) {
+            continue;
+          }
+          std::vector<Card> temp;
+          temp.insert(temp.end(), two[o1].begin(), two[o1].end());
+          temp.insert(temp.end(), two[o2].begin(), two[o2].end());
+          ans.push_back(CardSet(type, t, temp));
+        }
+      }
+    }
     break;
   }
 
