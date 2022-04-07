@@ -2,24 +2,78 @@
 #include <cassert>
 #include <chrono>
 #include <cstdlib>
+#include <exception>
 #include <type_traits>
 
 void Game::init() {
-  // Offering cards
-  for (int i = 0; i < 3; i++) {
-    for (int j = 0; j < 17; j++) {
-      players[i].push_back(deck.pick());
+  bool game_restart = false;
+  int landlord = 0;
+  do { // while (game_restart)
+    // Offering cards
+    deck = Deck();
+    for (int i = 0; i < 3; i++) {
+      players[i].clear();
+      for (int j = 0; j < 17; j++) {
+        players[i].push_back(deck.pick());
+      }
     }
-  }
-  print_state();
+    for (auto &p : players) {
+      std::sort(p.begin(), p.end());
+    }
+    print_state();
 
-  // 抢地主
-  // TODO
+    // 抢地主
+    // TODO
+    srand(time(NULL));
+    int rand_index = rand() % 3;
+    int current_index = rand_index;
+    do { // while (!decide_landlord)
+      std::cout << "Player " << current_index
+                << " decide to be landlord (1 for true, 0 for false): "
+                << std::endl;
+      int decision_landlord;
+      std::cin >> decision_landlord;
+      if (decision_landlord == 1) {
+        std::cout << "Player " << current_index << " wants to be landlord!"
+                  << std::endl;
+        game_restart = false;
+        landlord = current_index;
+        break;
+      }
+      current_index = (current_index + 1) % 3;
+      if (current_index == rand_index) {
+        std::cout << "No one wants to be landlord, game restart." << std::endl;
+        game_restart = true;
+        break;
+      }
+    } while (true);
+  } while (game_restart);
 
   // 决定地主
-  // TODO
-  // Currently set landlord to player 0
-  int landlord = 0;
+  int next_player = (landlord + 1) % 3;
+  int landlord_candidate = -1;
+  while (next_player != landlord) {
+    std::cout << "Player " << next_player
+              << ": do you want to pick the landlord?" << std::endl;
+    int input;
+    std::cin >> input;
+    if (input == 1) {
+      if (landlord_candidate == -1) {
+        landlord_candidate = next_player;
+      }
+    }
+    next_player = (next_player + 1) % 3;
+  }
+  if (landlord_candidate != -1) {
+    std::cout << "Player " << landlord << ": do you want to be landlord?"
+              << std::endl;
+    int input;
+    std::cin >> input;
+    if (input == 0) {
+      landlord = landlord_candidate;
+    }
+  }
+  std::cout << "Player " << landlord << " becomes the landlord!" << std::endl;
 
   // 亮地主牌
   std::vector<Card> landlord_cards;
