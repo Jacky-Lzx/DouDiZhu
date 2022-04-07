@@ -86,10 +86,12 @@ private:
   Type type;
   std::vector<Card> base;
   std::vector<Card> extra;
+  bool has_extra;
 
 public:
   CardSet() = delete;
-  CardSet(Type _type, std::vector<Card> _base) : type(_type), base(_base) {}
+  CardSet(Type _type, std::vector<Card> _base)
+      : type(_type), base(_base), extra({}), has_extra(false) {}
   CardSet(Type _type, std::vector<Card> _base, std::vector<Card> _extra)
       : CardSet(_type, _base) {
     switch (_type.get_type_t()) {
@@ -99,6 +101,7 @@ public:
     case Airplane_Pair:
     case Four_Two_Single: // 四带二（两张或两对）
     case Four_Two_Pair: { // 四带二（两张或两对）
+      has_extra = true;
       extra = _extra;
       break;
     }
@@ -113,6 +116,7 @@ public:
   Type get_type() const { return type; }
 
   friend bool operator<(const CardSet &c1, const CardSet &c2);
+  friend std::ostream &operator<<(std::ostream &os, const CardSet &card_set);
 };
 
 /**

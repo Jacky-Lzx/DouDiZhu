@@ -48,20 +48,20 @@ std::ostream &operator<<(std::ostream &os, const Card &c) {
   os << "[";
   switch (c.suit) {
   case SPADE:
-    os << "Spade";
-    os << " " << c.number << "]";
+    // os << "Spade ";
+    os << c.number << "]";
     break;
   case HEART:
-    os << "Heart";
-    os << " " << c.number << "]";
+    // os << "Heart ";
+    os << c.number << "]";
     break;
   case DIAMOND:
-    os << "Diamond";
-    os << " " << c.number << "]";
+    // os << "Diamond ";
+    os << c.number << "]";
     break;
   case CLUB:
-    os << "Club";
-    os << " " << c.number << "]";
+    // os << "Club ";
+    os << c.number << "]";
     break;
   case RED_JOKER:
     os << "Red Joker";
@@ -202,4 +202,17 @@ bool operator<(const CardSet &c1, const CardSet &c2) {
     assert(0);
   }
   return false;
+}
+
+std::ostream &operator<<(std::ostream &os, const CardSet &card_set) {
+  for (const auto &b : card_set.base) {
+    os << b << " ";
+  }
+  if (card_set.has_extra) {
+    os << "+ ";
+    for (const auto &e : card_set.extra) {
+      os << e << " ";
+    }
+  }
+  return os;
 }

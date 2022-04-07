@@ -139,16 +139,7 @@ void Game::run() {
       int index = 0;
       for (const auto &move : move) {
         std::cout << index++ << " ---\t";
-        std::cout << move.get_type() << ": ";
-        for (const auto &m : move.get_base()) {
-          std::cout << m << " ";
-        }
-        if (!move.get_extra().empty()) {
-          std::cout << " +++ ";
-          for (const auto &m : move.get_extra()) {
-            std::cout << m << " ";
-          }
-        }
+        std::cout << move;
         std::cout << std::endl;
       }
       if (index == 0) {
